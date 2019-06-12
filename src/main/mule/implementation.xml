@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="8c74c33a-bec1-4e86-9cd4-842ab0aaeff5" >
+		<db:my-sql-connection host="mudb.learn.mulesoft.com" port="3306" user="mule" password="mule" database="training" />
+	</db:config>
+	<flow name="getAllAccounts" doc:id="621692f7-b889-4949-b003-cc90b2cd1c73" >
+		<db:select doc:name="Select" doc:id="ae73ed43-2ee6-4557-8fd9-36b8860d8650" config-ref="Database_Config" >
+			<db:sql >SELECT * FROM flights_customers
+WHERE accountType = :type</db:sql>
+			<db:input-parameters ><![CDATA[#[{"type": attributes.queryParams['type']}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="dd7a3ed3-5202-4703-a32e-e2c6e2c836e7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	firstName: ((payload01.name default "") splitBy(' '))[0],
+	lastName: ((payload01.name default "") splitBy(' '))[1],
+	country: payload01.country default "",
+	address: ((payload01.street default "") ++ (payload01.city default "")) ++ (payload01.state default ""),
+	accountType: payload01.accountType default "",
+	id: payload01.accountID default "",
+	postal: payload01.postal default "",
+	creationDate: payload01.creationDate as String default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getSingleAccount" doc:id="c5b11a45-b6e8-4217-8d5a-2a8d94aa02f7" >
+		<db:select doc:name="Select" doc:id="c01568a8-daec-4f51-9327-878489cacd46" config-ref="Database_Config" >
+			<db:sql >SELECT * FROM flights_customers 
+WHERE id : ID</db:sql>
+			<db:input-parameters ><![CDATA[#[{'ID' : attributes.uriParams.ID}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="f658858d-d0af-4675-abc4-2b0772cf9754" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	firstName: ((payload01.name default "") splitBy(' '))[0],
+	lastName: ((payload01.name default "") splitBy(' '))[1],
+	country: payload01.country default "",
+	address: ((payload01.street default "") ++ (payload01.city default "")) ++ (payload01.state default ""),
+	accountType: payload01.accountType default "",
+	id: payload01.accountID default "",
+	postal: payload01.postal default "",
+	creationDate: payload01.creationDate as String default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

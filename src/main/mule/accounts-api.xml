@@ -6,17 +6,12 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
     <apikit:config name="accounts-api-config" raml="accounts-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <db:config name="Database_Config" doc:name="Database Config" doc:id="b26de315-b844-48ce-8598-41527cc14121" >
-		<db:my-sql-connection host="mudb.learn.mulesoft.com" port="3306" user="mule" password="mule" database="training" />
-	</db:config>
 	<flow name="accounts-api-main">
         <http:listener config-ref="accounts-api-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
             </http:response>
             <http:error-response statusCode="#[vars.httpStatus default 500]">
-                <http:body>#[payload]</http:body>
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+                <http:body><![CDATA[#[payload]]]></http:body>
             </http:error-response>
         </http:listener>
         <apikit:router config-ref="accounts-api-config" />
@@ -180,50 +175,10 @@ output application/json
         </ee:transform>
     </flow>
     <flow name="get:\accounts:accounts-api-config">
-		<db:select doc:id="90520719-2df5-45ed-875f-96328441fd94" config-ref="Database_Config">
-			<db:sql >SELECT * FROM flights_customers</db:sql>
-		</db:select>
-		<ee:transform doc:name="Transform Message" doc:id="edbb9b5b-069f-4147-9763-4d2db881c91b" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-payload map ( payload01 , indexOfPayload01 ) -> {
-	firstName: ((payload01.name default "") splitBy(' '))[0],
-	lastName: ((payload01.name default "") splitBy(' '))[1],
-	country: payload01.country default "",
-	address: ((payload01.street default "") ++ (payload01.city default "")) ++ (payload01.state default ""),
-	accountType: payload01.accountType default "",
-	id: payload01.accountID default "",
-	postal: payload01.postal default "",
-	creationDate: payload01.creationDate as String default ""
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
+		<flow-ref doc:name="getAllAccount" doc:id="64bc552f-2515-4104-9e51-7b9b44d802e1" name="getAllAccounts"/>
     </flow>
     <flow name="get:\accounts\(id):accounts-api-config">
-		<db:select doc:name="Select" doc:id="595efbc2-acd9-4f92-9976-f07a8bceb694" config-ref="Database_Config">
-			<db:sql >SELECT * FROM flights_customers 
-WHERE id : ID</db:sql>
-			<db:input-parameters ><![CDATA[#[{'ID' : attributes.uriParams.ID}]]]></db:input-parameters>
-		</db:select>
-		<ee:transform doc:name="Copy_of_Transform Message" doc:id="3b7da59e-2f60-44f9-b89b-6983684bdce5" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-payload map ( payload01 , indexOfPayload01 ) -> {
-	firstName: ((payload01.name default "") splitBy(' '))[0],
-	lastName: ((payload01.name default "") splitBy(' '))[1],
-	country: payload01.country default "",
-	address: ((payload01.street default "") ++ (payload01.city default "")) ++ (payload01.state default ""),
-	accountType: payload01.accountType default "",
-	id: payload01.accountID default "",
-	postal: payload01.postal default "",
-	creationDate: payload01.creationDate as String default ""
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
+		<flow-ref doc:name="getSingleAccount" doc:id="ea064755-b192-47a3-af5c-8bc9012758c9" name="getSingleAccount"/>
     </flow>
     <flow name="post:\accounts:application\json:accounts-api-config">
         <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="828b97df-0c97-4f9d-a90f-8b85d38837d1">
